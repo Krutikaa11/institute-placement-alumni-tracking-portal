@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="placementPortalApp" ng-controller="PortalCtrl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanjivani University Placement & Alumni Tracking Portal, Kopargaon</title>
+  <!-- Bootstrap 5 CSS -->
+  <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="assets/js/chart.umd.min.js"></script>
+  <!-- AngularJS 1.8 -->
+  <script src="assets/js/angular.min.js"></script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+
+  <!-- Top Global Navigation Bar -->
+  <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+    <div class="container-fluid px-3 px-lg-4">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#home" ng-click="navigate('home')">
+        <div class="navbar-brand-badge">
+          <i class="bi bi-mortarboard-fill fs-4 text-warning"></i>
+        </div>
+        <div>
+          <span class="fw-bold fs-5 tracking-tight d-block text-white">Sanjivani University</span>
+          <span class="small text-white-50" style="font-size: 0.72rem; letter-spacing: 0.5px;">TRAINING, PLACEMENT & ALUMNI CELL • KOPARGAON</span>
+        </div>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMain">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          <li class="nav-item">
+            <a class="nav-link" ng-class="{active: activeView === 'home'}" href="#home" ng-click="navigate('home')"><i class="bi bi-house-door me-1"></i>Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" ng-class="{active: activeView === 'drives'}" href="#drives" ng-click="navigate('drives')"><i class="bi bi-briefcase me-1"></i>Placement Drives</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" ng-class="{active: activeView === 'alumni'}" href="#alumni" ng-click="navigate('alumni')"><i class="bi bi-people me-1"></i>Alumni Directory</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" ng-class="{active: activeView === 'statistics'}" href="#statistics" ng-click="navigate('statistics')"><i class="bi bi-bar-chart-line me-1"></i>Statistics</a>
+          </li>
+        </ul>
+
+        <!-- Right Side: Guest Actions & User Dropdown -->
+        <div class="d-flex align-items-center gap-2">
+          <!-- Guest Navigation -->
+          <div ng-if="!currentUser" class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-light btn-sm px-3" ng-click="navigate('login')">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login
+            </button>
+            <button class="btn btn-warning btn-sm px-3 fw-semibold text-dark" ng-click="navigate('register')">
+              <i class="bi bi-person-plus me-1"></i>Register
+            </button>
+          </div>
+
+          <!-- Authenticated User Dropdown -->
+          <div ng-if="currentUser" class="dropdown">
+            <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center gap-2 px-3 py-1 shadow-sm" type="button" data-bs-toggle="dropdown">
+              <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width:26px; height:26px; font-size:12px; font-weight:bold;">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <span class="fw-semibold text-dark small" ng-bind="currentUser.name">User</span>
+              <span class="badge bg-primary-subtle text-primary" style="font-size:0.65rem;" ng-bind="currentUser.role | uppercase">STUDENT</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+              <li><h6 class="dropdown-header">Portal Workspace</h6></li>
+              <li>
+                <a class="dropdown-item" href="javascript:void(0)" ng-click="navigate(currentUser.role + '-dashboard')">
+                  <i class="bi bi-speedometer2 me-2 text-primary"></i>My Dashboard
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="javascript:void(0)" ng-click="logout()"><i class="bi bi-box-arrow-right me-2"></i>Sign Out</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Global Toast Notification Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="portalToast" class="toast align-items-center shadow-lg border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex p-2">
+        <div class="toast-body d-flex align-items-center">
+          <i id="toastIcon" class="bi bi-info-circle-fill me-2 fs-5 text-primary"></i>
+          <span id="toastBody" class="fw-medium small">Notification message</span>
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP VIEWS CONTAINER -->
+  <main class="flex-grow-1">
+
+    <!-- ========================================== -->
+    <!-- 1. HOME VIEW (Academic University Portal)  -->
+    <!-- ========================================== -->
+    <div id="view-home" class="view-container" ng-show="activeView === 'home'">
+      <!-- Hero Section -->
+      <section class="hero-section text-center">
+        <div class="container position-relative" style="z-index: 2;">
+          <div class="hero-badge">
+            <i class="bi bi-stars text-warning"></i>
+            <span>Sanjivani University, Kopargaon • Training & Placement Cell</span>
+          </div>
+          <h1 class="hero-title">Sanjivani Placement & Alumni Portal</h1>
+          <p class="hero-subtitle">
+            Connecting Sanjivani Students, Leading Hiring Partners & Global Alumni Network
+          </p>
+          <div class="d-flex justify-content-center flex-wrap gap-3 mt-4">
+            <button class="btn btn-primary btn-lg px-4 shadow" ng-click="navigate('drives')">
+              <i class="bi bi-briefcase-fill me-2"></i>Explore Placements
+            </button>
+            <button class="btn btn-outline-light btn-lg px-4" ng-click="navigate('alumni')">
+              <i class="bi bi-mortarboard-fill me-2"></i>Alumni Network
+            </button>
+            <button class="btn btn-warning btn-lg px-4 fw-bold text-dark shadow" ng-click="navigate('login')">
+              <i class="bi bi-box-arrow-in-right me-2"></i>Portal Login
+            </button>
+          </div>
+
+          <!-- Quick Role Demo Bar -->
+          <div class="mt-5 p-3 rounded-4 bg-dark bg-opacity-50 border border-white border-opacity-10 d-inline-flex align-items-center flex-wrap justify-content-center gap-2">
+            <span class="small text-white-50 me-2"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>One-Click Demo Login:</span>
+            <button class="demo-pill" ng-click="quickDemoLogin('admin')"><i class="bi bi-shield-lock me-1 text-danger"></i>Admin</button>
+            <button class="demo-pill" ng-click="quickDemoLogin('officer')"><i class="bi bi-person-workspace me-1 text-primary"></i>Placement Officer</button>
+            <button class="demo-pill" ng-click="quickDemoLogin('student')"><i class="bi bi-person-badge me-1 text-success"></i>Student (Rohan)</button>
+            <button class="demo-pill" ng-click="quickDemoLogin('alumni')"><i class="bi bi-mortarboard me-1 text-info"></i>Alumni (Priya)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Placement Highlights / KPI Row -->
+      <section class="py-5">
+        <div class="container">
+          <div class="row g-4 text-center">
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-primary-subtle text-primary mx-auto mb-2">
+                  <i class="bi bi-award-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0">{{kpis.placed_students || 5}}</h3>
+                <small class="text-muted fw-semibold">Students Placed</small>
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-success-subtle text-success mx-auto mb-2">
+                  <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <h3 class="fw-bold mb-0">₹{{kpis.highest_package || 18}} LPA</h3>
+                <small class="text-muted fw-semibold">Highest Package</small>
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-info-subtle text-info mx-auto mb-2">
+                  <i class="bi bi-cash-stack"></i>
+                </div>
+                <h3 class="fw-bold mb-0">₹{{kpis.average_package || 12.7}} LPA</h3>
+                <small class="text-muted fw-semibold">Average Package</small>
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-warning-subtle text-warning mx-auto mb-2">
+                  <i class="bi bi-buildings-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0">{{kpis.total_companies || 5}}</h3>
+                <small class="text-muted fw-semibold">Hiring Partners</small>
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-primary-subtle text-primary mx-auto mb-2">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0">{{kpis.total_alumni || 5}}</h3>
+                <small class="text-muted fw-semibold">Active Alumni</small>
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-2 col-6">
+              <div class="kpi-card">
+                <div class="kpi-icon-wrapper bg-danger-subtle text-danger mx-auto mb-2">
+                  <i class="bi bi-pie-chart-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0">{{kpis.placement_percentage || 50}}%</h3>
+                <small class="text-muted fw-semibold">Placement Rate</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Latest Placement Drives Preview -->
+      <section class="py-5 bg-white border-top border-bottom">
+        <div class="container">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <span class="text-primary fw-bold text-uppercase small">Opportunities</span>
+              <h2 class="fw-bold mb-0">Latest Placement Drives</h2>
+            </div>
+            <button class="btn btn-outline-primary" ng-click="navigate('drives')">
+              View All Drives <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+          <div class="row">
+            <div class="col-md-6 col-lg-4 mb-4" ng-repeat="d in latestDrives">
+              <div class="portal-card">
+                <div class="card-top-accent bg-primary"></div>
+                <div class="p-4 d-flex flex-column h-100">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                      <span class="badge bg-light text-dark border mb-1">{{d.company_name}}</span>
+                      <h5 class="fw-bold mb-1">{{d.job_role}}</h5>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary fw-bold fs-6">₹{{d.package}} LPA</span>
+                  </div>
+                  <div class="mb-3 text-muted small">
+                    <div><i class="bi bi-geo-alt me-1"></i>{{d.location}}</div>
+                    <div><i class="bi bi-calendar-event me-1"></i>Drive Date: {{d.drive_date}}</div>
+                    <div><i class="bi bi-clock me-1 text-danger"></i>Deadline: <b>{{d.deadline}}</b></div>
+                  </div>
+                  <div class="p-2 rounded bg-light border mb-3 small">
+                    <div><b>Min CGPA:</b> {{d.min_cgpa}}</div>
+                    <div class="text-truncate"><b>Branches:</b> {{d.eligible_branches}}</div>
+                  </div>
+                  <div class="mt-auto pt-2 border-top text-end">
+                    <button class="btn btn-sm btn-outline-primary" ng-click="showDriveDetails(d)">
+                      <i class="bi bi-eye me-1"></i>View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Top Recruiting MNCs -->
+      <section class="py-5">
+        <div class="container">
+          <div class="text-center mb-5">
+            <span class="badge bg-primary-subtle text-primary fw-bold text-uppercase px-3 py-2 mb-2">
+              <i class="bi bi-globe-americas me-1"></i> Global Hiring Partners
+            </span>
+            <h2 class="fw-bold display-6">Top Recruiting MNCs</h2>
+            <p class="text-muted fs-6 mx-auto" style="max-width: 680px;">
+              Global Fortune 500 multinationals and premier technology conglomerates hiring Sanjivani University engineering graduates with industry-leading packages.
+            </p>
+          </div>
+          <div class="row g-4">
+            <div class="col-md-6 col-lg-3 col-sm-6" ng-repeat="c in companies">
+              <div class="portal-card h-100 p-4 d-flex flex-column position-relative shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div class="kpi-icon-wrapper bg-primary-subtle text-primary shadow-sm" style="width:48px; height:48px; font-size:1.3rem;">
+                    <i class="bi bi-buildings-fill"></i>
+                  </div>
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle small fw-semibold">
+                    <i class="bi bi-patch-check-fill text-warning me-1"></i>Global MNC
+                  </span>
+                </div>
+                <h5 class="fw-bold mb-1 text-dark">{{c.company_name}}</h5>
+                <span class="text-primary small fw-semibold mb-2"><i class="bi bi-cpu me-1"></i>{{c.industry}}</span>
+                <p class="text-muted small mb-3 flex-grow-1" style="font-size: 0.83rem; line-height: 1.4;">{{c.description}}</p>
+                <div class="small text-muted mb-3">
+                  <i class="bi bi-geo-alt-fill me-1 text-danger"></i>{{c.location}}
+                </div>
+                <div class="pt-3 border-top d-flex align-items-center justify-content-between">
+                  <div class="d-flex gap-1 flex-wrap">
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" ng-if="c.active_drives_count > 0">
+                      <i class="bi bi-briefcase me-1"></i>{{c.active_drives_count}} Drive{{c.active_drives_count > 1 ? 's' : ''}}
+                    </span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" ng-if="c.placed_students_count > 0">
+                      <i class="bi bi-mortarboard me-1"></i>{{c.placed_students_count}} Placed
+                    </span>
+                  </div>
+                  <a ng-if="c.website" ng-href="{{c.website}}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2" title="Careers Portal">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Alumni Mentorship Highlight Section -->
+      <section class="py-5 bg-primary text-white position-relative">
+        <div class="container">
+          <div class="row align-items-center">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+              <span class="badge bg-warning text-dark px-3 py-2 fw-semibold mb-2"><i class="bi bi-star-fill me-1"></i>Student Mentorship</span>
+              <h2 class="fw-bold">Connect with Alumni at Google, Microsoft, Amazon & TCS</h2>
+              <p class="text-white-50 mb-4 fs-5">
+                Bridge the gap between campus and career. Request personalized 1-on-1 mentorship, resume reviews, and mock interview guidance directly from industry alumni.
+              </p>
+              <button class="btn btn-warning btn-lg fw-bold text-dark" ng-click="navigate('alumni')">
+                <i class="bi bi-chat-heart-fill me-2"></i>Find a Mentor
+              </button>
+            </div>
+            <div class="col-lg-4 text-center">
+              <div class="p-4 bg-white text-dark rounded-4 shadow-lg">
+                <i class="bi bi-mortarboard fs-1 text-primary mb-2 d-block"></i>
+                <h4 class="fw-bold">Alumni Mentorship</h4>
+                <p class="text-muted small">80%+ of mentored students clear technical rounds on their first drive.</p>
+                <div class="d-flex justify-content-center gap-2">
+                  <span class="badge bg-success">Mock Interviews</span>
+                  <span class="badge bg-info">Resume Review</span>
+                  <span class="badge bg-primary">Referrals</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Campus Info -->
+      <section class="py-5 bg-light">
+        <div class="container">
+          <div class="row g-4">
+            <div class="col-md-4">
+              <div class="p-4 bg-white rounded-3 border h-100">
+                <i class="bi bi-geo-alt-fill text-primary fs-3 mb-2 d-block"></i>
+                <h5>Training & Placement Cell</h5>
+                <p class="text-muted small">Academic Block 3, 2nd Floor<br/>University Campus, Tech Boulevard<br/>Bangalore - 560100</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-4 bg-white rounded-3 border h-100">
+                <i class="bi bi-envelope-fill text-primary fs-3 mb-2 d-block"></i>
+                <h5>Direct Contact</h5>
+                <p class="text-muted small">Placement Queries: <b>placements@portal.edu</b><br/>Alumni Cell: <b>alumni@portal.edu</b><br/>Office Phone: +91 80 2345 6789</p>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="p-4 bg-white rounded-3 border h-100">
+                <i class="bi bi-clock-fill text-primary fs-3 mb-2 d-block"></i>
+                <h5>Drive Hours</h5>
+                <p class="text-muted small">Monday – Saturday: 9:00 AM – 6:00 PM<br/>Interview Days: 8:00 AM – 9:00 PM<br/>Support: 24/7 Portal Access</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. LOGIN VIEW                              -->
+    <!-- ========================================== -->
+    <div id="view-login" class="view-container py-5" ng-show="activeView === 'login'">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-7 col-lg-5">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+              <div class="bg-primary p-4 text-white text-center">
+                <i class="bi bi-shield-lock-fill fs-1 mb-2"></i>
+                <h4 class="fw-bold mb-1">Portal Login</h4>
+                <p class="small text-white-50 mb-0">Sign in to access your placement dashboard</p>
+              </div>
+              <div class="card-body p-4 p-md-5">
+                <form ng-submit="login()">
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Select Role (Optional Filter)</label>
+                    <select class="form-select" ng-model="loginData.role">
+                      <option value="">Auto-Detect Role</option>
+                      <option value="student">Student</option>
+                      <option value="alumni">Alumni</option>
+                      <option value="officer">Placement Officer</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Email Address</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                      <input type="email" class="form-control" placeholder="user@portal.edu" required ng-model="loginData.email">
+                    </div>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label small fw-semibold">Password</label>
+                    <div class="input-group">
+                      <span class="input-group-text"><i class="bi bi-key"></i></span>
+                      <input type="password" class="form-control" placeholder="••••••••" required ng-model="loginData.password">
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                  </button>
+                </form>
+
+                <hr class="my-4">
+
+                <!-- One Click Demo Login Buttons -->
+                <div class="text-center">
+                  <span class="text-muted small d-block mb-2">Quick Test Login (One-Click):</span>
+                  <div class="d-flex flex-wrap justify-content-center gap-1">
+                    <button class="btn btn-sm btn-outline-danger" ng-click="quickDemoLogin('admin')">Admin</button>
+                    <button class="btn btn-sm btn-outline-primary" ng-click="quickDemoLogin('officer')">Officer</button>
+                    <button class="btn btn-sm btn-outline-success" ng-click="quickDemoLogin('student')">Student</button>
+                    <button class="btn btn-sm btn-outline-info" ng-click="quickDemoLogin('alumni')">Alumni</button>
+                  </div>
+                </div>
+
+                <div class="text-center mt-4 small">
+                  Don't have an account? <a href="#register" ng-click="navigate('register')" class="fw-bold">Register here</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. REGISTER VIEW                           -->
+    <!-- ========================================== -->
+    <div id="view-register" class="view-container py-5" ng-show="activeView === 'register'">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+              <div class="bg-primary p-4 text-white text-center">
+                <i class="bi bi-person-plus-fill fs-1 mb-2"></i>
+                <h4 class="fw-bold mb-1">Create an Account</h4>
+                <p class="small text-white-50 mb-0">Join the university placement & alumni ecosystem</p>
+              </div>
+              <div class="card-body p-4 p-md-5">
+                <form ng-submit="register()">
+                  <div class="mb-3">
+                    <label class="form-label small fw-semibold">Register As</label>
+                    <div class="d-flex gap-3">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" ng-model="regData.role" value="student" id="roleStu">
+                        <label class="form-check-label" for="roleStu">Student</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" ng-model="regData.role" value="alumni" id="roleAlum">
+                        <label class="form-check-label" for="roleAlum">Alumni</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label small fw-semibold">Full Name</label>
+                      <input type="text" class="form-control" required placeholder="John Doe" ng-model="regData.name">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label small fw-semibold">Email</label>
+                      <input type="email" class="form-control" required placeholder="user@domain.edu" ng-model="regData.email">
+                    </div>
+                    <div class="col-md-12">
+                      <label class="form-label small fw-semibold">Password</label>
+                      <input type="password" class="form-control" required placeholder="Min 6 characters" ng-model="regData.password">
+                    </div>
+
+                    <!-- Student Specific -->
+                    <div class="row g-3 mt-1" ng-if="regData.role === 'student'">
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Roll Number</label>
+                        <input type="text" class="form-control" placeholder="CS2024001" ng-model="regData.roll_no">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Branch</label>
+                        <select class="form-select" ng-model="regData.branch">
+                          <option value="Computer Science">Computer Science</option>
+                          <option value="Information Technology">Information Technology</option>
+                          <option value="Electronics & Comm">Electronics & Comm</option>
+                          <option value="Mechanical Engineering">Mechanical Engineering</option>
+                          <option value="Electrical Engineering">Electrical Engineering</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">CGPA</label>
+                        <input type="number" step="0.01" max="10" class="form-control" placeholder="8.50" ng-model="regData.cgpa">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Phone</label>
+                        <input type="text" class="form-control" placeholder="+91 98765 43210" ng-model="regData.phone">
+                      </div>
+                    </div>
+
+                    <!-- Alumni Specific -->
+                    <div class="row g-3 mt-1" ng-if="regData.role === 'alumni'">
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Graduation Year</label>
+                        <input type="number" class="form-control" ng-model="regData.graduation_year">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Company</label>
+                        <input type="text" class="form-control" placeholder="Google / Microsoft" ng-model="regData.company">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Job Role</label>
+                        <input type="text" class="form-control" placeholder="Software Engineer" ng-model="regData.job_role">
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label small fw-semibold">LinkedIn Profile URL</label>
+                        <input type="url" class="form-control" placeholder="https://linkedin.com/in/..." ng-model="regData.linkedin">
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold mt-4">
+                    <i class="bi bi-check-circle me-1"></i>Complete Registration
+                  </button>
+                </form>
+
+                <div class="text-center mt-4 small">
+                  Already have an account? <a href="#login" ng-click="navigate('login')" class="fw-bold">Sign In</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. PLACEMENT DRIVES LISTING VIEW           -->
+    <!-- ========================================== -->
+    <div id="view-drives" class="view-container py-4" ng-show="activeView === 'drives'">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="fw-bold mb-1">Placement Drives Listing</h2>
+            <p class="text-muted mb-0">Browse and apply for verified on-campus and virtual hiring drives.</p>
+          </div>
+          <span class="badge bg-primary fs-6 px-3 py-2">{{drives.length}} Drives Available</span>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-card mb-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search by role, company, skills..." ng-model="driveFilter.search" ng-change="loadDrives()">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" ng-model="driveFilter.branch" ng-change="loadDrives()">
+                <option value="">All Branches</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Comm">Electronics & Comm</option>
+                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" ng-model="driveFilter.status" ng-change="loadDrives()">
+                <option value="active">Active Drives</option>
+                <option value="upcoming">Upcoming</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-outline-secondary w-100" ng-click="driveFilter.search=''; driveFilter.branch=''; loadDrives();">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drives Cards Grid -->
+        <div class="row">
+          <div class="col-12 text-center py-5 text-muted" ng-if="drives.length === 0">
+            <i class="bi bi-folder-x fs-1 d-block mb-2"></i>No placement drives found matching your criteria.
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4" ng-repeat="d in drives">
+            <div class="portal-card">
+              <div class="card-top-accent bg-primary"></div>
+              <div class="p-4 d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <div>
+                    <span class="badge bg-light text-dark border mb-1">{{d.company_name}}</span>
+                    <h5 class="fw-bold mb-1">{{d.job_role}}</h5>
+                  </div>
+                  <span class="badge bg-primary-subtle text-primary fw-bold fs-6">₹{{d.package}} LPA</span>
+                </div>
+                <div class="mb-3 text-muted small">
+                  <div><i class="bi bi-geo-alt me-1"></i>{{d.location}}</div>
+                  <div><i class="bi bi-calendar-event me-1"></i>Drive Date: {{d.drive_date}}</div>
+                  <div><i class="bi bi-clock me-1 text-danger"></i>Deadline: <b>{{d.deadline}}</b></div>
+                </div>
+                <div class="p-2 rounded bg-light border mb-3 small">
+                  <div><b>Min CGPA:</b> {{d.min_cgpa}}</div>
+                  <div class="text-truncate"><b>Branches:</b> {{d.eligible_branches}}</div>
+                  <div><b>Vacancies:</b> {{d.vacancies}} openings</div>
+                </div>
+                <div class="mt-auto d-flex justify-content-between align-items-center pt-2 border-top">
+                  <div>
+                    <!-- Student specific eligibility badges -->
+                    <span ng-if="currentUser.role === 'student' && d.application" class="badge badge-status badge-{{d.application.status | lowercase}}">
+                      <i class="bi bi-check-circle"></i> Applied: {{d.application.status}}
+                    </span>
+                    <span ng-if="currentUser.role === 'student' && !d.application && d.is_eligible" class="badge bg-success">
+                      <i class="bi bi-patch-check-fill me-1"></i>Eligible
+                    </span>
+                    <span ng-if="currentUser.role === 'student' && !d.application && !d.is_eligible" class="badge bg-danger" title="{{(d.eligibility_reasons || []).join('; ')}}">
+                      <i class="bi bi-x-circle me-1"></i>Not Eligible
+                    </span>
+                  </div>
+                  <div>
+                    <!-- Action buttons -->
+                    <button ng-if="currentUser.role === 'student' && d.application" class="btn btn-sm btn-outline-secondary" ng-click="navigate('student-applications')">
+                      <i class="bi bi-clock-history me-1"></i>Track
+                    </button>
+                    <button ng-if="currentUser.role === 'student' && !d.application && d.is_eligible" class="btn btn-sm btn-primary" ng-click="openApplyModal(d)">
+                      <i class="bi bi-send-fill me-1"></i>Apply
+                    </button>
+                    <button ng-if="currentUser.role === 'student' && !d.application && !d.is_eligible" class="btn btn-sm btn-outline-danger" ng-click="showEligibility(d)">
+                      <i class="bi bi-info-circle me-1"></i>Criteria
+                    </button>
+                    <button ng-if="currentUser.role !== 'student'" class="btn btn-sm btn-outline-primary" ng-click="showDriveDetails(d)">
+                      <i class="bi bi-eye me-1"></i>Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. ALUMNI DIRECTORY VIEW                   -->
+    <!-- ========================================== -->
+    <div id="view-alumni" class="view-container py-4" ng-show="activeView === 'alumni'">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="fw-bold mb-1">Alumni Network Directory</h2>
+            <p class="text-muted mb-0">Discover and connect with graduates working across global enterprises.</p>
+          </div>
+        </div>
+
+        <div class="filter-card mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-4">
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search alumni, company, skills..." ng-model="alumniFilter.search" ng-change="loadAlumni()">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" ng-model="alumniFilter.branch" ng-change="loadAlumni()">
+                <option value="">All Branches</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Comm">Electronics & Comm</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select class="form-select" ng-model="alumniFilter.year" ng-change="loadAlumni()">
+                <option value="">All Years</option>
+                <option value="2022">Class of 2022</option>
+                <option value="2021">Class of 2021</option>
+                <option value="2020">Class of 2020</option>
+                <option value="2019">Class of 2019</option>
+                <option value="2018">Class of 2018</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="alumMentOnly" ng-model="alumniFilter.mentorshipOnly" ng-change="loadAlumni()">
+                <label class="form-check-label small fw-semibold" for="alumMentOnly">Available for Mentorship</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12 text-center py-5 text-muted" ng-if="alumni.length === 0">
+            <i class="bi bi-people fs-1 d-block mb-2"></i>No alumni found matching your criteria.
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4" ng-repeat="a in alumni">
+            <div class="portal-card p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="kpi-icon-wrapper bg-primary text-white fw-bold">
+                  {{a.name.charAt(0)}}
+                </div>
+                <div>
+                  <h5 class="fw-bold mb-0">{{a.name}}</h5>
+                  <div class="text-primary fw-semibold small">{{a.job_role || 'Alumni'}}</div>
+                  <div class="text-muted small">{{a.company || 'Tech Industry'}}</div>
+                </div>
+              </div>
+              <div class="mb-3 small">
+                <div><i class="bi bi-mortarboard me-1 text-muted"></i>Class of <b>{{a.graduation_year}}</b> • {{a.branch}}</div>
+                <div><i class="bi bi-geo-alt me-1 text-muted"></i>{{a.location || 'India'}}</div>
+              </div>
+              <p class="text-muted small mb-3 text-truncate-2">{{a.bio || 'Alumni member available for career guidance.'}}</p>
+              <div class="d-flex justify-content-between align-items-center pt-2 border-top mt-auto">
+                <span ng-if="a.available_for_mentorship == 1" class="badge bg-success-subtle text-success border border-success-subtle">
+                  <i class="bi bi-patch-check me-1"></i>Available for Mentorship
+                </span>
+                <span ng-if="a.available_for_mentorship != 1" class="badge bg-light text-muted border">Mentorship Closed</span>
+                <a ng-if="a.linkedin" href="{{a.linkedin}}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-linkedin text-primary"></i></a>
+              </div>
+              <button ng-if="currentUser.role === 'student' && a.available_for_mentorship == 1" class="btn btn-sm btn-primary w-100 mt-3" ng-click="openMentorshipModal(a)">
+                <i class="bi bi-chat-quote-fill me-1"></i>Request Mentorship
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6. PLACEMENT STATISTICS VIEW               -->
+    <!-- ========================================== -->
+    <div id="view-statistics" class="view-container py-4" ng-show="activeView === 'statistics'">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="fw-bold mb-1">Placement Statistics & Insights</h2>
+            <p class="text-muted mb-0">Official analytics, recruitment trends, and salary comparisons.</p>
+          </div>
+          <button class="btn btn-outline-primary" ng-click="downloadReport('placements', 'csv')">
+            <i class="bi bi-download me-1"></i>Download Statistics (CSV)
+          </button>
+        </div>
+
+        <div class="row g-4 mb-5 text-center">
+          <div class="col-md-3 col-6">
+            <div class="kpi-card">
+              <span class="text-muted small text-uppercase fw-semibold">Total Students</span>
+              <h2 class="fw-bold text-dark mt-1">{{kpis.total_students || 10}}</h2>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="kpi-card">
+              <span class="text-muted small text-uppercase fw-semibold">Placed Students</span>
+              <h2 class="fw-bold text-success mt-1">{{kpis.placed_students || 5}}</h2>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="kpi-card">
+              <span class="text-muted small text-uppercase fw-semibold">Placement Rate</span>
+              <h2 class="fw-bold text-primary mt-1">{{kpis.placement_percentage || 50}}%</h2>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="kpi-card">
+              <span class="text-muted small text-uppercase fw-semibold">Top Package</span>
+              <h2 class="fw-bold text-warning mt-1">₹{{kpis.highest_package || 18}} LPA</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Visual Charts -->
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="portal-card p-4">
+              <h5 class="fw-bold mb-1"><i class="bi bi-calendar-week me-2 text-primary"></i>Placement Statistics by Year</h5>
+              <p class="text-muted small mb-3">Historical year-on-year hiring growth and average CTC.</p>
+              <div style="height: 320px;"><canvas id="chartPlacementsByYear"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="portal-card p-4">
+              <h5 class="fw-bold mb-1"><i class="bi bi-pie-chart me-2 text-primary"></i>Placed vs Unplaced</h5>
+              <p class="text-muted small mb-3">Overall cohort placement status ratio.</p>
+              <div style="height: 320px;"><canvas id="chartPlacedVsUnplaced"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="portal-card p-4">
+              <h5 class="fw-bold mb-1"><i class="bi bi-diagram-3 me-2 text-primary"></i>Placement Statistics by Branch</h5>
+              <p class="text-muted small mb-3">Engineering branch-wise placement count and distribution.</p>
+              <div style="height: 300px;"><canvas id="chartPlacementsByBranch"></canvas></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="portal-card p-4">
+              <h5 class="fw-bold mb-1"><i class="bi bi-buildings me-2 text-primary"></i>Company-wise Placements</h5>
+              <p class="text-muted small mb-3">Top hiring companies by student recruitments.</p>
+              <div style="height: 300px;"><canvas id="chartCompanyPlacements"></canvas></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="portal-card p-4">
+              <h5 class="fw-bold mb-1"><i class="bi bi-cash-stack me-2 text-primary"></i>Salary & Package Bracket Distribution</h5>
+              <p class="text-muted small mb-3">Number of student job offers categorized by LPA CTC brackets.</p>
+              <div style="height: 260px;"><canvas id="chartPackageRanges"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 7. STUDENT DASHBOARD                       -->
+    <!-- ========================================== -->
+    <div id="view-student-dashboard" class="view-container" ng-show="activeView === 'student-dashboard'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card">
+            <div class="sidebar-avatar"><i class="bi bi-person"></i></div>
+            <div class="overflow-hidden">
+              <h6 class="mb-0 fw-bold text-truncate">{{currentUser.name}}</h6>
+              <span class="small text-white-50">Student Portal</span>
+            </div>
+          </div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-header-label">Main</li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#student-dashboard" ng-click="navigate('student-dashboard')"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-applications" ng-click="navigate('student-applications')"><i class="bi bi-journal-check"></i>My Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#drives" ng-click="navigate('drives')"><i class="bi bi-briefcase"></i>Available Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#alumni" ng-click="navigate('alumni')"><i class="bi bi-people"></i>Mentorship Network</a></li>
+            <li class="sidebar-header-label">Profile</li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-profile" ng-click="navigate('student-profile')"><i class="bi bi-person-lines-fill"></i>Profile & Resume</a></li>
+            <li class="sidebar-header-label">Exit</li>
+            <li class="sidebar-item"><a class="sidebar-link text-danger" href="javascript:void(0)" ng-click="logout()"><i class="bi bi-box-arrow-right text-danger"></i>Logout</a></li>
+          </ul>
+        </aside>
+
+        <div class="dashboard-main">
+          <div class="dashboard-topbar">
+            <div>
+              <h3 class="page-title">Student Dashboard</h3>
+              <p class="page-subtitle">Track your recruitment drives, interviews, and applications.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" ng-click="navigate('drives')">
+              <i class="bi bi-search me-1"></i>Explore Drives
+            </button>
+          </div>
+
+          <div class="profile-progress-widget">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small fw-bold text-uppercase text-muted">Profile Completion Status</span>
+              <span class="badge bg-primary">{{studentProfile.profile_completion || 100}}%</span>
+            </div>
+            <div class="progress mb-2">
+              <div class="progress-bar" style="width: {{studentProfile.profile_completion || 100}}%;"></div>
+            </div>
+            <div class="d-flex justify-content-between small text-muted">
+              <span>Roll No: <b>{{studentProfile.roll_no || '-'}}</b> | Branch: <b>{{studentProfile.branch || '-'}}</b></span>
+              <span>CGPA: <b>{{studentProfile.cgpa || '-'}}</b></span>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+              <div class="stat-widget">
+                <div class="stat-widget-info"><h6>Eligible Drives</h6><div class="stat-value text-primary">{{studentEligibleDrives.length || 0}}</div></div>
+                <i class="bi bi-patch-check fs-2 text-primary"></i>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="stat-widget">
+                <div class="stat-widget-info"><h6>Applications</h6><div class="stat-value text-dark">{{studentApplications.length || 0}}</div></div>
+                <i class="bi bi-send fs-2 text-secondary"></i>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="stat-widget">
+                <div class="stat-widget-info"><h6>Interviews</h6><div class="stat-value text-warning">{{studentInterviewsCount || 0}}</div></div>
+                <i class="bi bi-calendar-check fs-2 text-warning"></i>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="stat-widget">
+                <div class="stat-widget-info"><h6>Offers / Placed</h6><div class="stat-value text-success">{{studentSelectedCount || 0}}</div></div>
+                <i class="bi bi-award fs-2 text-success"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="portal-card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0">Application Tracker (Recent)</h5>
+              <button class="btn btn-sm btn-outline-primary" ng-click="navigate('student-applications')">View All</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Status</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr ng-if="studentApplications.length === 0"><td colspan="5" class="text-center py-4 text-muted">No applications yet.</td></tr>
+                  <tr ng-repeat="a in studentApplications | limitTo:5">
+                    <td><b>{{a.company_name}}</b></td>
+                    <td>{{a.job_role}}</td>
+                    <td>₹{{a.package}} LPA</td>
+                    <td><span class="badge badge-status badge-{{a.status | lowercase}}">{{a.status}}</span></td>
+                    <td><small class="text-muted">{{a.applied_date.split(' ')[0]}}</small></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 8. STUDENT APPLICATIONS VIEW               -->
+    <!-- ========================================== -->
+    <div id="view-student-applications" class="view-container" ng-show="activeView === 'student-applications'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Student Portal</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-dashboard" ng-click="navigate('student-dashboard')"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#student-applications" ng-click="navigate('student-applications')"><i class="bi bi-journal-check"></i>My Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#drives" ng-click="navigate('drives')"><i class="bi bi-briefcase"></i>Available Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-profile" ng-click="navigate('student-profile')"><i class="bi bi-person-lines-fill"></i>Profile & Resume</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">My Applications</h3><p class="page-subtitle">Track your application pipeline from submission to selection.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Location</th><th>Applied On</th><th>Current Status</th><th>Officer Notes</th></tr></thead>
+                <tbody>
+                  <tr ng-if="studentApplications.length === 0"><td colspan="7" class="text-center py-5 text-muted">No applications submitted yet.</td></tr>
+                  <tr ng-repeat="a in studentApplications">
+                    <td><b>{{a.company_name}}</b></td>
+                    <td>{{a.job_role}}</td>
+                    <td>₹{{a.package}} LPA</td>
+                    <td>{{a.location}}</td>
+                    <td>{{a.applied_date}}</td>
+                    <td><span class="badge badge-status badge-{{a.status | lowercase}}">{{a.status}}</span></td>
+                    <td><small class="text-muted">{{a.notes || '-'}}</small></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 9. STUDENT PROFILE & RESUME VIEW           -->
+    <!-- ========================================== -->
+    <div id="view-student-profile" class="view-container" ng-show="activeView === 'student-profile'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Student Portal</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-dashboard" ng-click="navigate('student-dashboard')"><i class="bi bi-speedometer2"></i>Dashboard</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#student-applications" ng-click="navigate('student-applications')"><i class="bi bi-journal-check"></i>My Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#student-profile" ng-click="navigate('student-profile')"><i class="bi bi-person-lines-fill"></i>Profile & Resume</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Student Profile & Resume</h3><p class="page-subtitle">Keep your academic records and resume updated for placement screening.</p></div></div>
+          <div class="row g-4">
+            <div class="col-lg-8">
+              <div class="portal-card p-4">
+                <h5 class="fw-bold mb-3">Academic & Personal Details</h5>
+                <form ng-submit="saveStudentProfile()">
+                  <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Full Name</label><input type="text" class="form-control" ng-model="studentProfile.name" required></div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Email</label><input type="email" class="form-control" ng-model="studentProfile.email" readonly disabled></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Roll Number</label><input type="text" class="form-control" ng-model="studentProfile.roll_no" readonly disabled></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Branch</label><input type="text" class="form-control" ng-model="studentProfile.branch"></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Current CGPA</label><input type="number" step="0.01" class="form-control" ng-model="studentProfile.cgpa"></div>
+                    <div class="col-md-6"><label class="form-label small fw-semibold">Phone Number</label><input type="text" class="form-control" ng-model="studentProfile.phone"></div>
+                    <div class="col-md-12"><label class="form-label small fw-semibold">Key Technical Skills</label><textarea class="form-control" rows="3" ng-model="studentProfile.skills"></textarea></div>
+                  </div>
+                  <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check2-circle me-1"></i>Save Profile</button>
+                </form>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="portal-card p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>Resume Document</h5>
+                <div class="mb-3" ng-if="studentProfile.resume">
+                  <a href="uploads/resumes/{{studentProfile.resume}}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-earmark-pdf me-1"></i>View Current Resume</a>
+                </div>
+                <div class="mb-3"><input type="file" id="fileResumeUpload" class="form-control form-control-sm" accept=".pdf,.doc,.docx"></div>
+                <button class="btn btn-success btn-sm w-100" ng-click="uploadStudentResume()"><i class="bi bi-cloud-upload me-1"></i>Upload & Verify</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 10. ALUMNI DASHBOARD                       -->
+    <!-- ========================================== -->
+    <div id="view-alumni-dashboard" class="view-container" ng-show="activeView === 'alumni-dashboard'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-mortarboard"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Alumni Network</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-header-label">Main</li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#alumni-dashboard" ng-click="navigate('alumni-dashboard')"><i class="bi bi-chat-quote"></i>Mentorship Requests</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#alumni" ng-click="navigate('alumni')"><i class="bi bi-people"></i>Alumni Directory</a></li>
+            <li class="sidebar-header-label">Profile</li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#alumni-profile" ng-click="navigate('alumni-profile')"><i class="bi bi-person-lines-fill"></i>My Profile</a></li>
+            <li class="sidebar-header-label">Exit</li>
+            <li class="sidebar-item"><a class="sidebar-link text-danger" href="javascript:void(0)" ng-click="logout()"><i class="bi bi-box-arrow-right text-danger"></i>Logout</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Alumni Mentorship Dashboard</h3><p class="page-subtitle">Manage mentorship requests, student communications, and career guidance.</p></div></div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="stat-widget"><div class="stat-widget-info"><h6>Total Requests</h6><div class="stat-value text-primary">{{alumniRequests.length || 0}}</div></div><i class="bi bi-inbox fs-2 text-primary"></i></div></div>
+            <div class="col-md-4"><div class="stat-widget"><div class="stat-widget-info"><h6>Pending Review</h6><div class="stat-value text-warning">{{alumniPendingCount || 0}}</div></div><i class="bi bi-clock-history fs-2 text-warning"></i></div></div>
+            <div class="col-md-4"><div class="stat-widget"><div class="stat-widget-info"><h6>Active Mentees</h6><div class="stat-value text-success">{{alumniAcceptedCount || 0}}</div></div><i class="bi bi-people-fill fs-2 text-success"></i></div></div>
+          </div>
+          <div class="portal-card p-4">
+            <h5 class="fw-bold mb-3">Incoming Student Mentorship Requests</h5>
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Student</th><th>Request Message</th><th>Date</th><th>Status</th><th>Resume</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-if="alumniRequests.length === 0"><td colspan="6" class="text-center py-4 text-muted">No requests received yet.</td></tr>
+                  <tr ng-repeat="r in alumniRequests">
+                    <td><b>{{r.student_name}}</b><div class="small text-muted">{{r.roll_no}} • {{r.branch}} (CGPA: {{r.cgpa}})</div></td>
+                    <td><p class="small mb-0">{{r.message}}</p></td>
+                    <td><small>{{r.request_date.split(' ')[0]}}</small></td>
+                    <td><span class="badge badge-status badge-{{r.status | lowercase}}">{{r.status}}</span></td>
+                    <td><a ng-if="r.resume" href="uploads/resumes/{{r.resume}}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-file-pdf"></i></a></td>
+                    <td>
+                      <button ng-if="r.status === 'Pending'" class="btn btn-sm btn-success me-1" ng-click="respondMentorship(r, 'Accepted')"><i class="bi bi-check-lg"></i></button>
+                      <button ng-if="r.status === 'Pending'" class="btn btn-sm btn-danger" ng-click="respondMentorship(r, 'Rejected')"><i class="bi bi-x-lg"></i></button>
+                      <button ng-if="r.status === 'Accepted'" class="btn btn-sm btn-outline-primary" ng-click="respondMentorship(r, 'Completed')"><i class="bi bi-flag-fill me-1"></i>Done</button>
+                      <span ng-if="r.status !== 'Pending' && r.status !== 'Accepted'" class="small text-muted">Closed</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 11. ALUMNI PROFILE VIEW                    -->
+    <!-- ========================================== -->
+    <div id="view-alumni-profile" class="view-container" ng-show="activeView === 'alumni-profile'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-mortarboard"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Alumni Network</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#alumni-dashboard" ng-click="navigate('alumni-dashboard')"><i class="bi bi-chat-quote"></i>Mentorship Requests</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#alumni-profile" ng-click="navigate('alumni-profile')"><i class="bi bi-person-lines-fill"></i>My Profile</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Alumni Career Profile</h3><p class="page-subtitle">Update your industry role, skills, and mentorship availability.</p></div></div>
+          <div class="portal-card p-4">
+            <form ng-submit="saveAlumniProfile()">
+              <div class="row g-3">
+                <div class="col-md-6"><label class="form-label small fw-semibold">Full Name</label><input type="text" class="form-control" ng-model="alumniProfile.name" required></div>
+                <div class="col-md-6"><label class="form-label small fw-semibold">Current Company</label><input type="text" class="form-control" ng-model="alumniProfile.company"></div>
+                <div class="col-md-6"><label class="form-label small fw-semibold">Job Title</label><input type="text" class="form-control" ng-model="alumniProfile.job_role"></div>
+                <div class="col-md-6"><label class="form-label small fw-semibold">Current Location</label><input type="text" class="form-control" ng-model="alumniProfile.location"></div>
+                <div class="col-md-12"><label class="form-label small fw-semibold">LinkedIn Profile URL</label><input type="url" class="form-control" ng-model="alumniProfile.linkedin"></div>
+                <div class="col-md-12"><label class="form-label small fw-semibold">Key Skills</label><input type="text" class="form-control" ng-model="alumniProfile.skills"></div>
+                <div class="col-md-12"><label class="form-label small fw-semibold">Bio / Guidance Focus</label><textarea class="form-control" rows="3" ng-model="alumniProfile.bio"></textarea></div>
+                <div class="col-12">
+                  <div class="form-check form-switch p-2 bg-light rounded border">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="alumniMentToggle" ng-model="alumniProfile.available_for_mentorship">
+                    <label class="form-check-label fw-bold" for="alumniMentToggle">Accept Mentorship Requests from Students</label>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-check2 me-1"></i>Save Profile</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 12. PLACEMENT OFFICER DASHBOARD            -->
+    <!-- ========================================== -->
+    <div id="view-officer-dashboard" class="view-container" ng-show="activeView === 'officer-dashboard'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person-workspace"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Placement Cell</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-header-label">Management</li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#officer-dashboard" ng-click="navigate('officer-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-drives" ng-click="navigate('officer-drives')"><i class="bi bi-briefcase"></i>Manage Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-applications" ng-click="navigate('officer-applications')"><i class="bi bi-people"></i>Manage Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-placements" ng-click="navigate('officer-placements')"><i class="bi bi-award"></i>Placement Results</a></li>
+            <li class="sidebar-header-label">Analytics</li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#statistics" ng-click="navigate('statistics')"><i class="bi bi-bar-chart"></i>Statistics</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#reports" ng-click="navigate('reports')"><i class="bi bi-file-earmark-spreadsheet"></i>Generate Reports</a></li>
+            <li class="sidebar-header-label">Exit</li>
+            <li class="sidebar-item"><a class="sidebar-link text-danger" href="javascript:void(0)" ng-click="logout()"><i class="bi bi-box-arrow-right text-danger"></i>Logout</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Placement Officer Console</h3><p class="page-subtitle">Coordinate campus drives, process student shortlists, and publish offers.</p></div>
+          <button class="btn btn-primary" ng-click="openDriveModal()"><i class="bi bi-plus-lg me-1"></i>New Placement Drive</button></div>
+          <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Total Students</h6><div class="stat-value text-dark">{{kpis.total_students || 10}}</div></div><i class="bi bi-mortarboard fs-2 text-primary"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Students Placed</h6><div class="stat-value text-success">{{kpis.placed_students || 5}}</div></div><i class="bi bi-award fs-2 text-success"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Placement Rate</h6><div class="stat-value text-primary">{{kpis.placement_percentage || 50}}%</div></div><i class="bi bi-pie-chart fs-2 text-primary"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Active Drives</h6><div class="stat-value text-warning">{{kpis.active_drives || 5}}</div></div><i class="bi bi-briefcase fs-2 text-warning"></i></div></div>
+          </div>
+          <div class="portal-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold mb-0">Recent Candidate Applications</h5><button class="btn btn-sm btn-outline-primary" ng-click="navigate('officer-applications')">Manage All</button></div>
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Candidate</th><th>Company</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="a in officerRecentApplications">
+                    <td><b>{{a.student_name}}</b><div class="small text-muted">{{a.roll_no}} • {{a.branch}}</div></td>
+                    <td>{{a.company_name}}</td>
+                    <td>{{a.job_role}}</td>
+                    <td><span class="badge badge-status badge-{{a.status | lowercase}}">{{a.status}}</span></td>
+                    <td><button class="btn btn-sm btn-outline-primary" ng-click="openStatusModal(a)"><i class="bi bi-pencil me-1"></i>Status</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 13. OFFICER MANAGE DRIVES                  -->
+    <!-- ========================================== -->
+    <div id="view-officer-drives" class="view-container" ng-show="activeView === 'officer-drives'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person-workspace"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Placement Cell</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-dashboard" ng-click="navigate('officer-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#officer-drives" ng-click="navigate('officer-drives')"><i class="bi bi-briefcase"></i>Manage Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-applications" ng-click="navigate('officer-applications')"><i class="bi bi-people"></i>Manage Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-placements" ng-click="navigate('officer-placements')"><i class="bi bi-award"></i>Placement Results</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Manage Placement Drives</h3><p class="page-subtitle">Schedule, update, and manage company recruitment schedules.</p></div>
+          <button class="btn btn-primary" ng-click="openDriveModal()"><i class="bi bi-plus-circle me-1"></i>Add New Drive</button></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Company</th><th>Role</th><th>Package</th><th>Drive Date</th><th>Status</th><th>Applicants</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="d in officerDrives">
+                    <td><b>{{d.company_name}}</b></td>
+                    <td>{{d.job_role}}</td>
+                    <td>₹{{d.package}} LPA</td>
+                    <td>{{d.drive_date}}</td>
+                    <td><span class="badge" ng-class="{'bg-success': d.status === 'active', 'bg-secondary': d.status !== 'active'}">{{d.status}}</span></td>
+                    <td><span class="badge bg-primary rounded-pill">{{d.applicant_count || 0}}</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-primary me-1" ng-click="openDriveModal(d)"><i class="bi bi-pencil"></i></button>
+                      <button class="btn btn-sm btn-outline-danger" ng-click="deleteDrive(d)"><i class="bi bi-trash"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 14. OFFICER MANAGE APPLICATIONS            -->
+    <!-- ========================================== -->
+    <div id="view-officer-applications" class="view-container" ng-show="activeView === 'officer-applications'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person-workspace"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Placement Cell</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-dashboard" ng-click="navigate('officer-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-drives" ng-click="navigate('officer-drives')"><i class="bi bi-briefcase"></i>Manage Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#officer-applications" ng-click="navigate('officer-applications')"><i class="bi bi-people"></i>Manage Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-placements" ng-click="navigate('officer-placements')"><i class="bi bi-award"></i>Placement Results</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Student Applications</h3><p class="page-subtitle">Review, shortlist, and update recruitment status.</p></div></div>
+          <div class="filter-card mb-4">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <select class="form-select" ng-model="appFilterStatus" ng-change="loadOfficerApplications()">
+                  <option value="">All Statuses</option>
+                  <option value="Applied">Applied</option>
+                  <option value="Shortlisted">Shortlisted</option>
+                  <option value="Interview">Interview</option>
+                  <option value="Selected">Selected</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Candidate</th><th>Company</th><th>Role</th><th>Applied Date</th><th>Status</th><th>Resume</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="a in officerApplications">
+                    <td><b>{{a.student_name}}</b><div class="small text-muted">{{a.roll_no}} • {{a.branch}} (CGPA: {{a.cgpa}})</div></td>
+                    <td>{{a.company_name}}</td>
+                    <td>{{a.job_role}}</td>
+                    <td>{{a.applied_date.split(' ')[0]}}</td>
+                    <td><span class="badge badge-status badge-{{a.status | lowercase}}">{{a.status}}</span></td>
+                    <td><a ng-if="a.resume_path" href="{{a.resume_path}}" target="_blank" class="btn btn-sm btn-outline-secondary"><i class="bi bi-file-earmark-pdf text-danger"></i> Resume</a></td>
+                    <td><button class="btn btn-sm btn-primary" ng-click="openStatusModal(a)">Update Status</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 15. OFFICER PLACEMENTS                     -->
+    <!-- ========================================== -->
+    <div id="view-officer-placements" class="view-container" ng-show="activeView === 'officer-placements'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card"><div class="sidebar-avatar"><i class="bi bi-person-workspace"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Placement Cell</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-dashboard" ng-click="navigate('officer-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-drives" ng-click="navigate('officer-drives')"><i class="bi bi-briefcase"></i>Manage Drives</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#officer-applications" ng-click="navigate('officer-applications')"><i class="bi bi-people"></i>Manage Applications</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#officer-placements" ng-click="navigate('officer-placements')"><i class="bi bi-award"></i>Placement Results</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Placement Records & Results</h3><p class="page-subtitle">Official log of placed students and salary packages.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Placed Candidate</th><th>Company</th><th>Role</th><th>Package</th><th>Year</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="p in placements">
+                    <td><b>{{p.student_name}}</b><div class="small text-muted">{{p.roll_no}} • {{p.branch}}</div></td>
+                    <td>{{p.company_name}}</td>
+                    <td>{{p.job_role || 'Selected'}}</td>
+                    <td><span class="fw-bold text-success">₹{{p.package}} LPA</span></td>
+                    <td>{{p.placement_year}}</td>
+                    <td><button class="btn btn-sm btn-outline-danger" ng-click="deletePlacement(p)"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 16. ADMIN DASHBOARD                        -->
+    <!-- ========================================== -->
+    <div id="view-admin-dashboard" class="view-container" ng-show="activeView === 'admin-dashboard'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card bg-dark"><div class="sidebar-avatar bg-danger"><i class="bi bi-shield-lock"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Control</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-header-label">Administration</li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#admin-dashboard" ng-click="navigate('admin-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-students" ng-click="navigate('admin-students')"><i class="bi bi-mortarboard"></i>Manage Students</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-alumni" ng-click="navigate('admin-alumni')"><i class="bi bi-people"></i>Manage Alumni</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-companies" ng-click="navigate('admin-companies')"><i class="bi bi-buildings"></i>Manage Companies</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-users" ng-click="navigate('admin-users')"><i class="bi bi-person-gear"></i>User Accounts</a></li>
+            <li class="sidebar-header-label">Reports</li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#reports" ng-click="navigate('reports')"><i class="bi bi-file-earmark-spreadsheet"></i>Reports & Exports</a></li>
+            <li class="sidebar-header-label">Exit</li>
+            <li class="sidebar-item"><a class="sidebar-link text-danger" href="javascript:void(0)" ng-click="logout()"><i class="bi bi-box-arrow-right text-danger"></i>Logout</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Master Administration Dashboard</h3><p class="page-subtitle">Full system CRUD control across all users, drives, companies, and records.</p></div></div>
+          <div class="row g-4 mb-4">
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Total Students</h6><div class="stat-value text-primary">{{kpis.total_students || 10}}</div></div><i class="bi bi-mortarboard fs-1 text-primary"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Total Alumni</h6><div class="stat-value text-info">{{kpis.total_alumni || 5}}</div></div><i class="bi bi-people fs-1 text-info"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Companies</h6><div class="stat-value text-warning">{{kpis.total_companies || 5}}</div></div><i class="bi bi-buildings fs-1 text-warning"></i></div></div>
+            <div class="col-md-3 col-6"><div class="stat-widget"><div class="stat-widget-info"><h6>Offers Placed</h6><div class="stat-value text-success">{{kpis.placed_students || 5}}</div></div><i class="bi bi-award fs-1 text-success"></i></div></div>
+          </div>
+          <div class="row g-4">
+            <div class="col-md-4">
+              <div class="portal-card p-4 text-center">
+                <i class="bi bi-people-fill fs-1 text-primary mb-2"></i>
+                <h5 class="fw-bold">Students Directory</h5>
+                <p class="text-muted small">View and manage enrolled student records.</p>
+                <button class="btn btn-outline-primary w-100" ng-click="navigate('admin-students')">Manage Students</button>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="portal-card p-4 text-center">
+                <i class="bi bi-buildings-fill fs-1 text-warning mb-2"></i>
+                <h5 class="fw-bold">Companies & Drives</h5>
+                <p class="text-muted small">Manage hiring corporate partners and placement drives.</p>
+                <button class="btn btn-outline-warning w-100 text-dark" ng-click="navigate('admin-companies')">Manage Companies</button>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="portal-card p-4 text-center">
+                <i class="bi bi-person-gear fs-1 text-danger mb-2"></i>
+                <h5 class="fw-bold">Security & Accounts</h5>
+                <p class="text-muted small">Manage system user credentials and status.</p>
+                <button class="btn btn-outline-danger w-100" ng-click="navigate('admin-users')">Manage Users</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Students -->
+    <div id="view-admin-students" class="view-container" ng-show="activeView === 'admin-students'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card bg-dark"><div class="sidebar-avatar bg-danger"><i class="bi bi-shield-lock"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Control</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-dashboard" ng-click="navigate('admin-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#admin-students" ng-click="navigate('admin-students')"><i class="bi bi-mortarboard"></i>Manage Students</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-alumni" ng-click="navigate('admin-alumni')"><i class="bi bi-people"></i>Manage Alumni</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-companies" ng-click="navigate('admin-companies')"><i class="bi bi-buildings"></i>Manage Companies</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-users" ng-click="navigate('admin-users')"><i class="bi bi-person-gear"></i>User Accounts</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Manage Students (CRUD)</h3><p class="page-subtitle">View and delete student accounts.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Student Name</th><th>Roll No</th><th>Branch</th><th>CGPA</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="s in adminStudents">
+                    <td><b>{{s.name}}</b><div class="small text-muted">{{s.email}}</div></td>
+                    <td>{{s.roll_no}}</td>
+                    <td>{{s.branch}}</td>
+                    <td>{{s.cgpa}}</td>
+                    <td><span class="badge" ng-class="{'bg-success': s.placements_count > 0, 'bg-secondary': s.placements_count == 0}">{{s.placements_count > 0 ? 'Placed' : 'Seeking'}}</span></td>
+                    <td><button class="btn btn-sm btn-outline-danger" ng-click="deleteAdminStudent(s)"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Alumni -->
+    <div id="view-admin-alumni" class="view-container" ng-show="activeView === 'admin-alumni'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card bg-dark"><div class="sidebar-avatar bg-danger"><i class="bi bi-shield-lock"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Control</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-dashboard" ng-click="navigate('admin-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-students" ng-click="navigate('admin-students')"><i class="bi bi-mortarboard"></i>Manage Students</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#admin-alumni" ng-click="navigate('admin-alumni')"><i class="bi bi-people"></i>Manage Alumni</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-companies" ng-click="navigate('admin-companies')"><i class="bi bi-buildings"></i>Manage Companies</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-users" ng-click="navigate('admin-users')"><i class="bi bi-person-gear"></i>User Accounts</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Manage Alumni (CRUD)</h3><p class="page-subtitle">Manage alumni directory entries.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Alumni Name</th><th>Company</th><th>Job Role</th><th>Class</th><th>Mentorship</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="a in adminAlumni">
+                    <td><b>{{a.name}}</b><div class="small text-muted">{{a.email}}</div></td>
+                    <td>{{a.company || '-'}}</td>
+                    <td>{{a.job_role || '-'}}</td>
+                    <td>{{a.graduation_year}}</td>
+                    <td><span class="badge" ng-class="{'bg-success': a.available_for_mentorship == 1, 'bg-secondary': a.available_for_mentorship != 1}">{{a.available_for_mentorship == 1 ? 'Available' : 'Closed'}}</span></td>
+                    <td><button class="btn btn-sm btn-outline-danger" ng-click="deleteAdminAlumni(a)"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Companies -->
+    <div id="view-admin-companies" class="view-container" ng-show="activeView === 'admin-companies'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card bg-dark"><div class="sidebar-avatar bg-danger"><i class="bi bi-shield-lock"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Control</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-dashboard" ng-click="navigate('admin-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-students" ng-click="navigate('admin-students')"><i class="bi bi-mortarboard"></i>Manage Students</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-alumni" ng-click="navigate('admin-alumni')"><i class="bi bi-people"></i>Manage Alumni</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#admin-companies" ng-click="navigate('admin-companies')"><i class="bi bi-buildings"></i>Manage Companies</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-users" ng-click="navigate('admin-users')"><i class="bi bi-person-gear"></i>User Accounts</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">Manage Companies</h3><p class="page-subtitle">Partner recruitment companies.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Company</th><th>Industry</th><th>Location</th><th>Website</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="c in adminCompanies">
+                    <td><b>{{c.company_name}}</b></td>
+                    <td>{{c.industry || '-'}}</td>
+                    <td>{{c.location || '-'}}</td>
+                    <td><a ng-if="c.website" href="{{c.website}}" target="_blank" class="small">{{c.website}}</a></td>
+                    <td><button class="btn btn-sm btn-outline-danger" ng-click="deleteAdminCompany(c)"><i class="bi bi-trash"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Users -->
+    <div id="view-admin-users" class="view-container" ng-show="activeView === 'admin-users'">
+      <div class="dashboard-container">
+        <aside class="dashboard-sidebar">
+          <div class="sidebar-brand-card bg-dark"><div class="sidebar-avatar bg-danger"><i class="bi bi-shield-lock"></i></div><div class="overflow-hidden"><h6 class="mb-0 fw-bold">{{currentUser.name}}</h6><span class="small text-white-50">Control</span></div></div>
+          <ul class="sidebar-menu">
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-dashboard" ng-click="navigate('admin-dashboard')"><i class="bi bi-speedometer2"></i>Overview</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-students" ng-click="navigate('admin-students')"><i class="bi bi-mortarboard"></i>Manage Students</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-alumni" ng-click="navigate('admin-alumni')"><i class="bi bi-people"></i>Manage Alumni</a></li>
+            <li class="sidebar-item"><a class="sidebar-link" href="#admin-companies" ng-click="navigate('admin-companies')"><i class="bi bi-buildings"></i>Manage Companies</a></li>
+            <li class="sidebar-item"><a class="sidebar-link active" href="#admin-users" ng-click="navigate('admin-users')"><i class="bi bi-person-gear"></i>User Accounts</a></li>
+          </ul>
+        </aside>
+        <div class="dashboard-main">
+          <div class="dashboard-topbar"><div><h3 class="page-title">User Accounts & Access</h3><p class="page-subtitle">System authentication accounts and role privileges.</p></div></div>
+          <div class="portal-card p-4">
+            <div class="table-responsive">
+              <table class="table table-hover table-custom align-middle">
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <tr ng-repeat="u in adminUsers">
+                    <td><b>{{u.name}}</b></td>
+                    <td>{{u.email}}</td>
+                    <td><span class="badge bg-secondary text-uppercase">{{u.role}}</span></td>
+                    <td><span class="badge" ng-class="{'bg-success': u.is_active == 1, 'bg-danger': u.is_active != 1}">{{u.is_active == 1 ? 'Active' : 'Inactive'}}</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-outline-warning me-1" ng-click="toggleUserStatus(u)">Toggle Active</button>
+                      <button class="btn btn-sm btn-outline-secondary" ng-click="resetUserPassword(u)">Reset Pass</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 17. REPORTS & EXPORTS                      -->
+    <!-- ========================================== -->
+    <div id="view-reports" class="view-container py-4" ng-show="activeView === 'reports'">
+      <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 class="fw-bold mb-1">Reports & Data Exports</h2>
+            <p class="text-muted mb-0">Generate and download official placement records, candidate lists, and drive summaries.</p>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-3">
+            <div class="portal-card p-4 text-center">
+              <i class="bi bi-award-fill fs-1 text-success mb-2"></i>
+              <h5 class="fw-bold">Placement Records</h5>
+              <p class="text-muted small">Full list of placed students, CTC, and hiring companies.</p>
+              <div class="btn-group w-100">
+                <button class="btn btn-sm btn-outline-primary" ng-click="downloadReport('placements', 'csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-success" ng-click="downloadReport('placements', 'json')">JSON</button>
+                <button class="btn btn-sm btn-outline-secondary" ng-click="downloadReport('placements', 'xml')">XML</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="portal-card p-4 text-center">
+              <i class="bi bi-people-fill fs-1 text-primary mb-2"></i>
+              <h5 class="fw-bold">Student Master List</h5>
+              <p class="text-muted small">Student roster with roll numbers, branch, and CGPAs.</p>
+              <div class="btn-group w-100">
+                <button class="btn btn-sm btn-outline-primary" ng-click="downloadReport('students', 'csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-success" ng-click="downloadReport('students', 'json')">JSON</button>
+                <button class="btn btn-sm btn-outline-secondary" ng-click="downloadReport('students', 'xml')">XML</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="portal-card p-4 text-center">
+              <i class="bi bi-briefcase-fill fs-1 text-warning mb-2"></i>
+              <h5 class="fw-bold">Drives Summary</h5>
+              <p class="text-muted small">Placement schedules, eligibility criteria, and deadlines.</p>
+              <div class="btn-group w-100">
+                <button class="btn btn-sm btn-outline-primary" ng-click="downloadReport('drives', 'csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-success" ng-click="downloadReport('drives', 'json')">JSON</button>
+                <button class="btn btn-sm btn-outline-secondary" ng-click="downloadReport('drives', 'xml')">XML</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3">
+            <div class="portal-card p-4 text-center">
+              <i class="bi bi-journal-text fs-1 text-info mb-2"></i>
+              <h5 class="fw-bold">Applications Log</h5>
+              <p class="text-muted small">Complete application statuses and review remarks.</p>
+              <div class="btn-group w-100">
+                <button class="btn btn-sm btn-outline-primary" ng-click="downloadReport('applications', 'csv')">CSV</button>
+                <button class="btn btn-sm btn-outline-success" ng-click="downloadReport('applications', 'json')">JSON</button>
+                <button class="btn btn-sm btn-outline-secondary" ng-click="downloadReport('applications', 'xml')">XML</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS CONTAINER                           -->
+  <!-- ========================================== -->
+
+  <!-- 1. Drive Details Modal -->
+  <div class="modal fade" id="driveDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">{{activeDrive.job_role}} - {{activeDrive.company_name}}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6"><h6 class="text-muted small text-uppercase">Company</h6><p class="fw-bold">{{activeDrive.company_name}}</p></div>
+            <div class="col-md-6"><h6 class="text-muted small text-uppercase">Salary Package</h6><p class="fw-bold text-success fs-5">₹{{activeDrive.package}} LPA</p></div>
+            <div class="col-md-6"><h6 class="text-muted small text-uppercase">Drive Date</h6><p>{{activeDrive.drive_date}}</p></div>
+            <div class="col-md-6"><h6 class="text-muted small text-uppercase">Application Deadline</h6><p class="text-danger fw-bold">{{activeDrive.deadline}}</p></div>
+            <div class="col-12"><h6 class="text-muted small text-uppercase">Required Skills</h6><p class="p-2 bg-light rounded">{{activeDrive.skills || 'Not specified'}}</p></div>
+            <div class="col-12"><h6 class="text-muted small text-uppercase">Eligibility Criteria</h6><p class="p-2 bg-light rounded">Min CGPA: {{activeDrive.min_cgpa}} | Branches: {{activeDrive.eligible_branches}}</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Eligibility Breakdown Modal -->
+  <div class="modal fade" id="eligibilityModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Eligibility Verification</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <h6 class="fw-bold mb-1">{{eligibilityReport.drive.job_role}} at {{eligibilityReport.drive.company_name}}</h6>
+            <div class="text-muted small">Package: ₹{{eligibilityReport.drive.package}} LPA</div>
+          </div>
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center" ng-repeat="c in eligibilityReport.checks">
+              <div>
+                <div class="fw-semibold">{{c.criterion}}</div>
+                <small ng-class="{'text-success': c.passed, 'text-danger': !c.passed}">{{c.message}}</small>
+              </div>
+              <span class="badge rounded-pill" ng-class="{'bg-success': c.passed, 'bg-danger': !c.passed}">
+                <i class="bi" ng-class="{'bi-check-lg': c.passed, 'bi-x-lg': !c.passed}"></i>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Apply For Drive Modal -->
+  <div class="modal fade" id="applyDriveModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-send-fill text-primary me-2"></i>Apply for {{applyDriveTarget.job_role}}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="applyDriveForm" ng-submit="submitApplication()">
+          <div class="modal-body p-4">
+            <p class="text-muted small mb-3">Your student profile and academic metrics will be automatically attached to this application.</p>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Upload Specific Resume (Optional)</label>
+              <input type="file" name="resume" class="form-control" accept=".pdf,.doc,.docx">
+              <div class="form-text">Leave blank to use your default profile resume.</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Application Note / Remarks</label>
+              <textarea name="notes" id="applyNotes" class="form-control" rows="3" placeholder="Briefly highlight why you are a great fit..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill me-1"></i>Submit Application</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Send Mentorship Request Modal -->
+  <div class="modal fade" id="mentorshipRequestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold"><i class="bi bi-chat-heart text-primary me-2"></i>Request Alumni Mentorship</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="small text-muted mb-1">Requesting mentorship from:</p>
+          <h6 class="fw-bold text-primary mb-3">{{mentorModalData.target_name}}</h6>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Personalized Message</label>
+            <textarea class="form-control" rows="4" placeholder="Introduce yourself and what guidance you are seeking..." ng-model="mentorModalData.message"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" ng-click="submitMentorshipRequest()"><i class="bi bi-send-fill me-1"></i>Send Request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Placement Officer Add/Edit Drive Modal -->
+  <div class="modal fade" id="driveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">{{driveFormModalTitle || 'Placement Drive'}}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form ng-submit="saveDrive()">
+          <div class="modal-body p-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Company</label>
+                <select class="form-select" ng-model="driveForm.company_id" required>
+                  <option ng-repeat="c in companiesList" value="{{c.id}}">{{c.company_name}}</option>
+                </select>
+              </div>
+              <div class="col-md-6"><label class="form-label small fw-semibold">Job Role</label><input type="text" class="form-control" ng-model="driveForm.job_role" required></div>
+              <div class="col-md-4"><label class="form-label small fw-semibold">Salary Package (LPA ₹)</label><input type="number" step="0.01" class="form-control" ng-model="driveForm.package" required></div>
+              <div class="col-md-4"><label class="form-label small fw-semibold">Location</label><input type="text" class="form-control" ng-model="driveForm.location" required></div>
+              <div class="col-md-4"><label class="form-label small fw-semibold">Vacancies</label><input type="number" class="form-control" ng-model="driveForm.vacancies"></div>
+              <div class="col-md-6"><label class="form-label small fw-semibold">Drive Date</label><input type="date" class="form-control" ng-model="driveForm.drive_date" required></div>
+              <div class="col-md-6"><label class="form-label small fw-semibold">Application Deadline</label><input type="date" class="form-control" ng-model="driveForm.deadline" required></div>
+              <div class="col-md-4"><label class="form-label small fw-semibold">Min CGPA</label><input type="number" step="0.01" class="form-control" ng-model="driveForm.min_cgpa"></div>
+              <div class="col-md-8"><label class="form-label small fw-semibold">Eligible Branches</label><input type="text" class="form-control" ng-model="driveForm.eligible_branches"></div>
+              <div class="col-12"><label class="form-label small fw-semibold">Required Skills</label><input type="text" class="form-control" ng-model="driveForm.skills"></div>
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Status</label>
+                <select class="form-select" ng-model="driveForm.status">
+                  <option value="active">Active</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Drive</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Update Application Status Modal -->
+  <div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Update Candidate Status</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form ng-submit="saveApplicationStatus()">
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Recruitment Stage</label>
+              <select class="form-select" ng-model="statusModalData.status">
+                <option value="Applied">Applied</option>
+                <option value="Shortlisted">Shortlisted</option>
+                <option value="Interview">Interview</option>
+                <option value="Selected">Selected</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Remarks Note</label>
+              <textarea class="form-control" rows="3" ng-model="statusModalData.notes" placeholder="e.g. Cleared round 1, interview scheduled..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Footer -->
+  <footer class="footer-custom">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <h5 class="d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard-fill text-warning"></i>
+            Sanjivani University, Kopargaon
+          </h5>
+          <p class="small text-white-50">
+            Training & Placement Cell, Directorate of Corporate Relations & Alumni Affairs.
+          </p>
+          <div class="small text-white-50 mt-2">
+            <div><i class="bi bi-geo-alt me-1 text-warning"></i> Sahajanandnagar, Post: Shingnapur, Kopargaon, Dist: Ahmednagar, Maharashtra - 423603</div>
+            <div><i class="bi bi-telephone me-1 text-info"></i> +91 2423 222862 / +91 91586 12345</div>
+            <div><i class="bi bi-envelope me-1 text-primary"></i> tpo@sanjivani.edu.in</div>
+          </div>
+        </div>
+        <div class="col-lg-2 col-6">
+          <h6>Navigation</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-1"><a href="#home" ng-click="navigate('home')">Home</a></li>
+            <li class="mb-1"><a href="#drives" ng-click="navigate('drives')">Placement Drives</a></li>
+            <li class="mb-1"><a href="#alumni" ng-click="navigate('alumni')">Alumni Directory</a></li>
+            <li class="mb-1"><a href="#statistics" ng-click="navigate('statistics')">Placement Statistics</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3 col-6">
+          <h6>Role Portals</h6>
+          <ul class="list-unstyled small">
+            <li class="mb-1"><a href="javascript:void(0)" ng-click="quickDemoLogin('student')">Student Portal (Rohan)</a></li>
+            <li class="mb-1"><a href="javascript:void(0)" ng-click="quickDemoLogin('alumni')">Alumni Mentorship (Priya)</a></li>
+            <li class="mb-1"><a href="javascript:void(0)" ng-click="quickDemoLogin('officer')">Placement Cell (TPO)</a></li>
+            <li class="mb-1"><a href="javascript:void(0)" ng-click="quickDemoLogin('admin')">Admin Console</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h6>Technology Stack</h6>
+          <p class="small text-white-50">
+            AngularJS & ES6 Frontend, PHP 8.1 REST Backend, MySQL, Bootstrap 5 UI, Chart.js, JSON/XML Data Exchange.
+          </p>
+          <div class="d-flex gap-2 text-white-50 fs-5">
+            <i class="bi bi-filetype-php"></i>
+            <i class="bi bi-database"></i>
+            <i class="bi bi-bootstrap"></i>
+            <i class="bi bi-filetype-json"></i>
+            <i class="bi bi-filetype-xml"></i>
+          </div>
+        </div>
+      </div>
+      <hr class="my-4 border-secondary">
+      <div class="text-center small text-white-50">
+        &copy; 2026 Sanjivani University, Kopargaon • Placement & Alumni Tracking Portal. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="assets/js/bootstrap.bundle.min.js"></script>
+  <!-- Application Scripts -->
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
